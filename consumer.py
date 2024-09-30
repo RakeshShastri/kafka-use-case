@@ -1,13 +1,15 @@
-import pandas as pd
-from kafka import KafkaProducer, KafkaConsumer
+from kafka import KafkaConsumer
 import json
-from datetime import datetime
-import mysql.connector
 
+# Kafka consumer configuration
+consumer = KafkaConsumer(
+    'your_kafka_topic',  # Topic to subscribe to
+    bootstrap_servers=['localhost:9092'],  # Broker address
+    auto_offset_reset='earliest',  # Read from the beginning if no offsets are present
+    group_id='your_consumer_group',  # Consumer group name
+    value_deserializer=lambda x: json.loads(x.decode('utf-8'))  # Deserialize JSON
+)
 
-
-consumer = KafkaConsumer('stock_topic', bootstrap_servers=['localhost:9092'], value_deserializer=lambda x: json.loads(x.decode('utf-8')))
-while True:
-    for message in consumer:
-        print(message)
-        print(message.value)
+# Consume messages
+for message in consumer:
+    print(f"Received message: {message.value}")
