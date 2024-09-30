@@ -6,10 +6,9 @@ import mysql.connector
 
 
 def kafka_consumer():
-    consumer = KafkaConsumer('stock_topic',
-                             bootstrap_servers=['localhost:9092'],
-                             value_deserializer=lambda x: json.loads(x.decode('utf-8')))
+    while True:
+        consumer = KafkaConsumer('stock_topic', bootstrap_servers=['localhost:9092'], value_deserializer=lambda x: json.loads(x.decode('utf-8')))
     
-    for message in consumer:
-        print(message)
-        print(message.value)
+        for message in consumer:
+            print(message)
+            print(message.value)
