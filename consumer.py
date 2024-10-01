@@ -28,6 +28,11 @@ INSERT INTO stock_data (idx, date, open, high, low, close, adj_close, volume, cl
 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
 """
 
+# SQL query to update True Range (TR) in the database
+update_tr_query = """
+UPDATE stock_data SET tr = %s WHERE idx = %s AND date = %s
+"""
+
 def validate_and_format_data(data):
     try:
         # Extract and validate idx (index)
@@ -57,12 +62,30 @@ def validate_and_format_data(data):
         volume = safe_float(data.get('Volume'))
         close_usd = safe_float(data.get('CloseUSD'))
 
-        # Return the validated and formatted values
         return (idx, date, open_value, high, low, close, adj_close, volume, close_usd)
     
     except Exception as e:
         print(f"Error processing data: {data}. Error: {e}")
         return None
+
+def calculate_true_range(high, low, close, previous_close):
+    try:
+        tr = max(high - low, abs(high - previous_close), abs(low - previous_close))
+        return tr
+    except Exception as e:
+        print(f"Error calculating True Range: {e}")
+        return None
+
+def get_previous_close(cursor, idx, date):
+    # Fetch the previous day's close value from the database
+    query = """
+    SELECT close FROM stock_data
+    WHERE idx = %s AND date < %s
+    ORDER BY date DESC LIMIT 1
+    """
+    cursor.execute(query, (idx, date))
+    result = cursor.fetchone()
+    return result[0] if result else None
 
 # Consume messages from Kafka and insert into the database
 for message in consumer:
@@ -71,15 +94,32 @@ for message in consumer:
     # Validate and format the received data
     validated_data = validate_and_format_data(data)
 
-    # Insert into the database if the data is valid
     if validated_data:
+        idx, date, open_value, high, low, close, adj_close, volume, close_usd = validated_data
+
+        # Insert the new record into the stock_data table
         try:
             cursor.execute(insert_query, validated_data)
-            db.commit()  # Commit the transaction
+            db.commit()
             print(f"Inserted into DB: {validated_data}")
-        except mysql.connector.Error as db_err:
-            print(f"Database error: {db_err}. Failed to insert: {validated_data}")
 
+            # Get the previous day's close price to calculate True Range (TR)
+            previous_close = get_previous_close(cursor, idx, date)
+
+            # Calculate True Range (TR) if previous close exists
+            if previous_close is not None:
+                tr = calculate_true_range(high, low, close, previous_close)
+                if tr is not None:
+                    # Update the stock_data table with the calculated TR
+                    cursor.execute(update_tr_query, (tr, idx, date))
+                    db.commit()
+                    print(f"Updated True Range for {idx} on {date}: {tr}")
+            else:
+                print(f"No previous close found for {idx} on {date}. TR calculation skipped.")
+        
+        except mysql.connector.Error as db_err:
+            print(f"Database error: {db_err}. Failed to insert or update TR.")
+        
 # Close the database connection and cursor when done
 cursor.close()
 db.close()
