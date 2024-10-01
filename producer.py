@@ -28,7 +28,7 @@ for _, row in df.iterrows():
     print(f"Sent: {json.dumps(row_dict)}")  # For debugging purposes
     
     # Wait for 1 second before sending the next message
-    time.sleep(10)
+    time.sleep(2)
 
 # Ensure all messages are sent
 producer.flush()
