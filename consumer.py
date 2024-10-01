@@ -14,8 +14,8 @@ consumer = KafkaConsumer(
 # Database connection configuration
 db = mysql.connector.connect(
     host="localhost",       # Change to your DB host
-    user="root",     # Change to your DB user
-    password="root",  # Change to your DB password
+    user="python-conn",     # Change to your DB user
+    password="pythonconn",  # Change to your DB password
     database="stock_db"  # Change to your DB name
 )
 
