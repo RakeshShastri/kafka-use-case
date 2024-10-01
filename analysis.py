@@ -39,7 +39,10 @@ def yearly_performance():
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+    
+    # Save the chart
+    plt.savefig('yearly_performance.png')
+    plt.close()  # Close the figure after saving to free memory
 
     return df
 
@@ -69,8 +72,11 @@ def stock_volatility(stock_symbol):
         plt.xticks(rotation=45)
         plt.grid(True)
         plt.tight_layout()
-        plt.show()
-        
+
+        # Save the chart
+        plt.savefig(f'true_range_{stock_symbol}.png')
+        plt.close()  # Close the figure after saving to free memory
+
         print(f"\nVolatility (14-day ATR) for {stock_symbol}: {atr:.2f}")
         return atr
     else:
@@ -101,7 +107,10 @@ def seasonal_trends():
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+
+    # Save the chart
+    plt.savefig('seasonal_trends.png')
+    plt.close()  # Close the figure after saving to free memory
 
     return df
 
